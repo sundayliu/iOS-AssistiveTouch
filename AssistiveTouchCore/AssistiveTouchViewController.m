@@ -12,6 +12,8 @@
 @interface AssistiveTouchViewController()
 
 @property(strong,nonatomic) AssistiveTouchIconView* iconView;
+@property(strong,nonatomic) AssistiveTouchContentView* contentView;
+@property (nonatomic) UIPanGestureRecognizer* panGestureRecongnizer;
 
 @end
 
@@ -34,12 +36,94 @@
     self.iconView = [[AssistiveTouchIconView alloc]init];
     [self.view addSubview:self.iconView];
     
-    CGRect frame = self.view.bounds;
-
-    self.iconView.center = CGPointMake(frame.size.width/2, frame.size.height/2);
+    [self.iconView addTarget:self action:@selector(onTouchUpInsideForIconView:) forControlEvents:UIControlEventTouchUpInside];
+    
+    self.contentView = [[AssistiveTouchContentView alloc] init];
+    [self.view addSubview:self.contentView];
+    self.contentView.hidden = YES;
+    [self.contentView.buttonDump1 addTarget:self action:@selector(onTouchUpInsideForContentView:) forControlEvents:UIControlEventTouchUpInside];
+    [self.contentView.buttonDump2 addTarget:self action:@selector(onTouchUpInsideForContentView:) forControlEvents:UIControlEventTouchUpInside];
+    [self.contentView.buttonCancel addTarget:self action:@selector(onTouchUpInsideForContentView:) forControlEvents:UIControlEventTouchUpInside];
+    
+    [self setupGestures];
 
 
 }
+
+// 拖动
+- (void)setupGestures
+{
+    self.panGestureRecongnizer = [[UIPanGestureRecognizer alloc]initWithTarget:self action:@selector(handlePanGestureRecongnizer:)];
+    self.panGestureRecongnizer.maximumNumberOfTouches = 1;
+    self.panGestureRecongnizer.minimumNumberOfTouches = 1;
+    [self.iconView addGestureRecognizer:self.panGestureRecongnizer];
+}
+
+- (void) handlePanGestureRecongnizer:(UIPanGestureRecognizer*)recognizer{
+    if (!(recognizer.state == UIGestureRecognizerStateChanged || recognizer.state == UIGestureRecognizerStateEnded)){
+        return;
+    }
+    CGPoint translation = [recognizer translationInView:self.view];
+    CGFloat width = self.iconView.frame.size.width;
+    CGFloat height = self.iconView.frame.size.height;
+    CGFloat parentWidth = self.view.frame.size.width;
+    CGFloat parentHeight = self.view.frame.size.height;
+    
+    CGFloat x = translation.x + self.iconView.center.x;
+    CGFloat y = translation.y + self.iconView.center.y;
+    if (x < width / 2){
+        x = width / 2;
+    }
+    
+    if (x > parentWidth - width / 2){
+        x = parentWidth - width / 2;
+    }
+    
+    if (y < height / 2){
+        y = height / 2;
+    }
+    
+    if (y > parentHeight - height / 2){
+        y = parentHeight - height / 2;
+    }
+    
+    self.iconView.center = CGPointMake(x,y);
+    
+    
+    
+    [self.panGestureRecongnizer setTranslation:CGPointMake(0,0) inView:self.view];
+}
+
+
+- (void) onTouchUpInsideForIconView:(id) sender{
+    if ([sender isKindOfClass:[AssistiveTouchIconView class]]){
+        self.contentView.hidden = !self.contentView.hidden;
+        self.contentView.center = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
+    }
+}
+
+- (void) onTouchUpInsideForContentView:(id)sender{
+    if ([sender isKindOfClass:[UIButton class]]){
+        UIButton* button = (UIButton*)sender;
+        switch(button.tag){
+            case BUTTON_TAG_CANCEL:
+                NSLog(@"ContentView Cancel");
+                break;
+            case BUTTON_TAG_1:
+                NSLog(@"ContentView Button One");
+                break;
+            case BUTTON_TAG_2:
+                NSLog(@"ContentView Button Two");
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
 
 - (void)loadView{
     
@@ -49,8 +133,8 @@
 
     CGRect frame = [UIScreen mainScreen].bounds;
     self.view = [[AssistiveTouchBackgroundView alloc]initWithFrame:frame];
-    self.view.backgroundColor = [UIColor redColor];
-    self.view.alpha = 0.4f;
+    self.view.backgroundColor = [UIColor greenColor];
+    self.view.alpha = 0.5f;
     
 }
 

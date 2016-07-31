@@ -22,9 +22,9 @@
 -(BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event{
     
     printf("***[core-window]pointInside:(%f,%f)\n", point.x,point.y);
-    NSLog(@"[core-window]event:%@", event);
-    printf("[core-window]pointInside:bounds(%f,%f,%f,%f)\n", self.bounds.origin.x, self.bounds.origin.y, self.bounds.size.width, self.bounds.size.height);
-    printf("[core-window]pointInside:frame(%f,%f,%f,%f)\n", self.frame.origin.x, self.frame.origin.y, self.frame.size.width, self.frame.size.height);
+    //NSLog(@"[core-window]event:%@", event);
+    //printf("[core-window]pointInside:bounds(%f,%f,%f,%f)\n", self.bounds.origin.x, self.bounds.origin.y, self.bounds.size.width, self.bounds.size.height);
+    //printf("[core-window]pointInside:frame(%f,%f,%f,%f)\n", self.frame.origin.x, self.frame.origin.y, self.frame.size.width, self.frame.size.height);
     
     for (UIView* subview in self.subviews){
         if (subview.hidden || subview.alpha <= 0.01 || !self.userInteractionEnabled){

@@ -21,7 +21,17 @@
 
 @end
 
+enum ContentSubViewTag{
+    BUTTON_TAG_1 = 1,
+    BUTTON_TAG_2 = 2,
+    BUTTON_TAG_CANCEL = 1000
+};
+
 @interface AssistiveTouchContentView : AssistiveTouchView
+
+@property (nonatomic) UIButton* buttonDump1;
+@property (nonatomic) UIButton* buttonDump2;
+@property (nonatomic) UIButton* buttonCancel;
 
 @end
 
