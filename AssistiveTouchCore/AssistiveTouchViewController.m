@@ -8,12 +8,26 @@
 #import "AssistiveTouchWindow.h"
 #import "AssistiveTouchView.h"
 
+// #define __ENABLE_DEBUG_LOG__
+#ifdef __ENABLE_DEBUG_LOG__
+#define DEBUG_LOG(...) printf(__VA_ARGS__)
+#define INFO_LOG(...) printf(__VA_ARGS__)
+#define WARN_LOG(...) printf(__VA_ARGS__)
+#define ERROR_LOG(...) printf(__VA_ARGS__)
+#else
+#define DEBUG_LOG(...)
+#define INFO_LOG(...) printf(__VA_ARGS__)
+#define WARN_LOG(...)
+#define ERROR_LOG(...)
+#endif
+
 
 @interface AssistiveTouchViewController()
 
 @property(strong,nonatomic) AssistiveTouchIconView* iconView;
 @property(strong,nonatomic) AssistiveTouchContentView* contentView;
 @property (nonatomic) UIPanGestureRecognizer* panGestureRecongnizer;
+@property CGRect iconSuperViewBounds;
 
 @end
 
@@ -21,20 +35,18 @@
 
 -(id)init{
     
-    printf("=== [ATVC] init\n");
+    DEBUG_LOG("=== [ATVC] init\n");
     self = [super init];
     
-    if (self.view == nil){
-        printf("=== [ATVC] view is nil");
-    }
     return self;
 }
 
 - (void)viewDidLoad{
-    printf("=== [ATVC] viewDidLoad\n");
+    DEBUG_LOG("=== [ATVC] viewDidLoad\n");
     
     self.iconView = [[AssistiveTouchIconView alloc]init];
     [self.view addSubview:self.iconView];
+    self.iconView.center = CGPointMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2);
     
     [self.iconView addTarget:self action:@selector(onTouchUpInsideForIconView:) forControlEvents:UIControlEventTouchUpInside];
     
@@ -46,11 +58,27 @@
     [self.contentView.buttonCancel addTarget:self action:@selector(onTouchUpInsideForContentView:) forControlEvents:UIControlEventTouchUpInside];
     
     [self setupGestures];
-
-
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(HandleOrientation:) name: UIApplicationDidChangeStatusBarOrientationNotification object: nil];
+    
+    _iconSuperViewBounds = self.iconView.superview.bounds;
 }
 
-// 拖动
+-(void)HandleOrientation:(NSNotification *)notification
+{
+    INFO_LOG("=== [ATVC] HandleOrientation\n");
+    
+    CGRect currentBounds = self.iconView.superview.bounds;
+    INFO_LOG("\t[vc](%f,%f)\n", currentBounds.size.width, currentBounds.size.height);
+}
+
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+//
+// Drag & Touch Action
+//
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+
 - (void)setupGestures
 {
     self.panGestureRecongnizer = [[UIPanGestureRecognizer alloc]initWithTarget:self action:@selector(handlePanGestureRecongnizer:)];
@@ -121,13 +149,129 @@
     }
 }
 
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+//
+// Rotate
+//
+///////////////////////////////////////////////////
+///////////////////////////////////////////////////
+
+// iOS 6 and above
+
+//  1. Current viewcontroller is UIWindow's rootViewController
+//  2. Current viewcontroller is modal  - presentModalViewController
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations{
+    // INFO_LOG("[vc]supportedInterfaceOrientations\n");
+    return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown | UIInterfaceOrientationMaskLandscapeLeft|UIInterfaceOrientationMaskLandscapeRight;
+}
+
+// 当前 ViewController的初始显示方向
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation{
+    // INFO_LOG("[vc]preferredInterfaceOrientationForPresentation\n");
+    return UIInterfaceOrientationPortrait;
+}
+
+// 是否支持自动旋转
+- (BOOL)shouldAutorotate{
+    // INFO_LOG("[vc]shouldAutorotate\n");
+    return YES;
+}
+
+// iOS 5 and before
+-(BOOL) shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation{
+    INFO_LOG("[vc]shouldAutorotateToInterfaceOrientation\n");
+    
+    if (toInterfaceOrientation == UIInterfaceOrientationPortrait
+        || toInterfaceOrientation == UIInterfaceOrientationPortraitUpsideDown
+        || toInterfaceOrientation == UIInterfaceOrientationLandscapeLeft
+        || toInterfaceOrientation == UIInterfaceOrientationLandscapeRight){
+        return YES;
+    }
+    return NO;
+}
+
+// Rotation callbacks
+-(void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration{
+    INFO_LOG("[vc]willRotateToInterfaceOrientation\n");
+    
+    CGRect currentBounds = self.iconView.superview.bounds;
+    INFO_LOG("\t[vc](%f,%f)\n", currentBounds.size.width, currentBounds.size.height);
+    
+    // 记录旋转前的尺寸
+    _iconSuperViewBounds = currentBounds;
+    
+    [super willRotateToInterfaceOrientation:toInterfaceOrientation duration:duration];
+}
+
+-(void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration{
+    INFO_LOG("[vc]willAnimateRotationToInterfaceOrientation\n");
+    
+    CGRect originBounds = _iconSuperViewBounds;
+    CGRect currentBounds = self.iconView.superview.bounds;
+    INFO_LOG("\t[vc](%f,%f)\n", currentBounds.size.width, currentBounds.size.height);
+    
+    CGFloat x = 0, y = 0;
+    CGFloat w = self.iconView.bounds.size.width / 2;
+    CGFloat h = self.iconView.bounds.size.height / 2;
+
+    if (self.iconView.center.x > originBounds.size.width / 2)
+    {
+        x = (self.iconView.center.x + w) * (currentBounds.size.width / originBounds.size.width) - w;
+    }
+    else if (self.iconView.center.x == originBounds.size.width / 2)
+    {
+        x = (self.iconView.center.x) * (currentBounds.size.width / originBounds.size.width);
+    }
+    else
+    {
+        x = (self.iconView.center.x - w) * (currentBounds.size.width / originBounds.size.width ) + w;
+    }
+    
+    if (self.iconView.center.y > originBounds.size.height / 2)
+    {
+        y = (self.iconView.center.y + h) * (currentBounds.size.height / originBounds.size.height) - h;
+    }
+    else if (self.iconView.center.y == originBounds.size.height / 2)
+    {
+        y = (self.iconView.center.y) * (currentBounds.size.height / originBounds.size.height);
+    }
+    else
+    {
+        y = (self.iconView.center.y - h) * (currentBounds.size.height / originBounds.size.height) + h;
+    }
+    
+    
+    INFO_LOG("\t[vc](%f,%f),(%f,%f)\n", x,y,self.iconView.center.x, self.iconView.center.y);
+    self.iconView.center = CGPointMake(x, y);
+
+    // 记录旋转后的尺寸
+    _iconSuperViewBounds = currentBounds;
+
+
+    
+    [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
+}
+
+-(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation{
+    UIInterfaceOrientation toInterfaceOrientation = [UIApplication sharedApplication].statusBarOrientation;
+    INFO_LOG("[vc]didRotateFromInterfaceOrientation:%d-%d\n", (int)fromInterfaceOrientation, (int)toInterfaceOrientation );
+    
+    CGRect currentBounds = self.iconView.superview.bounds;
+    INFO_LOG("\t[vc](%f,%f)\n", currentBounds.size.width, currentBounds.size.height);
+    
+    [super didRotateFromInterfaceOrientation:fromInterfaceOrientation];
+    
+    
+}
+
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 
 - (void)loadView{
     
-    printf("=== [ATVC] loadView\n");
+    DEBUG_LOG("=== [ATVC] loadView\n");
     
     // 这里不能调用self.view 即 getter 否则会导致递归调用 loadView
 
@@ -139,62 +283,54 @@
 }
 
 - (void)viewWillLayoutSubviews{
-    printf("=== [ATVC] viewWillLayoutSubviews\n");
+    DEBUG_LOG("=== [ATVC] viewWillLayoutSubviews\n");
     
     [super viewWillLayoutSubviews];
 }
 
 - (void)viewDidLayoutSubviews{
-    printf("=== [ATVC] viewDidLayoutSubviews\n");
+    INFO_LOG("=== [ATVC] viewDidLayoutSubviews\n");
     [super viewDidLayoutSubviews];
-    
-    // 改变 view 的 frame
-//    CGRect frame = [UIScreen mainScreen].bounds;
-//    frame = CGRectMake(30, 30, frame.size.width-60, frame.size.height-60);
-//    self.view.frame = frame;
-    
-    // center subview
-    // CGRect frame = self.view.bounds;
-    // self.iconView.center = CGPointMake(frame.size.width/2, frame.size.height/2);
     
     [self dumpView];
 }
 
 - (void)viewWillAppear:(BOOL)animated{
-    printf("=== [ATVC] viewWillAppear\n");
+    DEBUG_LOG("=== [ATVC] viewWillAppear\n");
 
     [super viewWillAppear:animated];
 }
 
 - (void)viewDidAppear:(BOOL)animated{
-    printf("=== [ATVC] viewDidAppear\n");
+    INFO_LOG("=== [ATVC] viewDidAppear\n");
 
-
+    _iconSuperViewBounds = self.iconView.superview.bounds;
+    INFO_LOG("\t[vc](%f,%f)\n", _iconSuperViewBounds.size.width, _iconSuperViewBounds.size.height);
     [super viewDidAppear:animated];
 }
 
 - (void)viewWillDisappear:(BOOL)animated{
-    printf("=== [ATVC] viewWillDisappear\n");
+    DEBUG_LOG("=== [ATVC] viewWillDisappear\n");
 
     [super viewWillDisappear:animated];
 }
 
 - (void)viewDidDisappear:(BOOL)animated{
-    printf("=== [ATVC] viewDidDisappear\n");
+    DEBUG_LOG("=== [ATVC] viewDidDisappear\n");
 
     [super viewDidDisappear:animated];
 }
 
 - (void)dumpView{
-    printf("=== [ATVC] view frame:(%f,%f,%f,%f)\n", self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height);
-    printf("=== [ATVC] view bounds:(%f,%f,%f,%f)\n", self.view.bounds.origin.x, self.view.bounds.origin.y, self.view.bounds.size.width, self.view.bounds.size.height);
+    DEBUG_LOG("=== [ATVC] view frame:(%f,%f,%f,%f)\n", self.view.frame.origin.x, self.view.frame.origin.y, self.view.frame.size.width, self.view.frame.size.height);
+    DEBUG_LOG("=== [ATVC] view bounds:(%f,%f,%f,%f)\n", self.view.bounds.origin.x, self.view.bounds.origin.y, self.view.bounds.size.width, self.view.bounds.size.height);
     for (UIView* subview in self.view.subviews){
         if (subview.hidden || subview.alpha <= 0.01f || !subview.userInteractionEnabled){
             continue;
         }
         
-        printf("\t [ATVC] view frame:(%f,%f,%f,%f)\n", subview.frame.origin.x, subview.frame.origin.y, subview.frame.size.width, subview.frame.size.height);
-        printf("\t [ATVC] view bounds:(%f,%f,%f,%f)\n", subview.bounds.origin.x, subview.bounds.origin.y, subview.bounds.size.width, subview.bounds.size.height);
+        DEBUG_LOG("\t [ATVC] view frame:(%f,%f,%f,%f)\n", subview.frame.origin.x, subview.frame.origin.y, subview.frame.size.width, subview.frame.size.height);
+        DEBUG_LOG("\t [ATVC] view bounds:(%f,%f,%f,%f)\n", subview.bounds.origin.x, subview.bounds.origin.y, subview.bounds.size.width, subview.bounds.size.height);
     }
 }
 
