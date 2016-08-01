@@ -78,7 +78,7 @@ static const CGFloat ATAlertViewHeight = 60.0;
         self.layer.cornerRadius = 30.0;
         self.layer.opacity = .95;
         self.clipsToBounds = YES;
-        self.frame = CGRectMake(30, 30, ATAlertViewWidth, ATAlertViewHeight);
+        self.frame = CGRectMake(60, 60, ATAlertViewWidth, ATAlertViewHeight);
     }
     
     return self;
@@ -111,6 +111,7 @@ static const CGFloat ATAlertContentViewPerHeight = 50;
     if (self){
         
         CGFloat WIDTH = MIN([[UIScreen mainScreen]bounds].size.width, [[UIScreen mainScreen]bounds].size.height)* 0.75;
+        WIDTH = WIDTH >= 320 ? 320 : WIDTH;
         CGFloat offsetX = 0;
         CGFloat offsetY = 0;
         self.buttonDump1 = [[UIButton alloc] initWithFrame:CGRectMake(offsetX, offsetY, WIDTH, ATAlertContentViewPerHeight)];

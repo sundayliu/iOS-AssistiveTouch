@@ -46,7 +46,9 @@
     
     self.iconView = [[AssistiveTouchIconView alloc]init];
     [self.view addSubview:self.iconView];
-    self.iconView.center = CGPointMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2);
+    
+    // center
+    // self.iconView.center = CGPointMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2);
     
     [self.iconView addTarget:self action:@selector(onTouchUpInsideForIconView:) forControlEvents:UIControlEventTouchUpInside];
     
@@ -157,30 +159,59 @@
 ///////////////////////////////////////////////////
 ///////////////////////////////////////////////////
 
+- (UIWindow*) windowWithLevel:(UIWindowLevel)windowLevel
+{
+    NSArray* windows = [[UIApplication sharedApplication]windows];
+    for (UIWindow* window in windows){
+        if (window.windowLevel == windowLevel){
+            return window;
+        }
+    }
+    
+    return nil;
+}
+
 // iOS 6 and above
 
 //  1. Current viewcontroller is UIWindow's rootViewController
 //  2. Current viewcontroller is modal  - presentModalViewController
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations{
     // INFO_LOG("[vc]supportedInterfaceOrientations\n");
+    UIWindow* window = [self windowWithLevel:UIWindowLevelNormal];
+    if (window){
+        return [window.rootViewController supportedInterfaceOrientations];
+    }
     return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskPortraitUpsideDown | UIInterfaceOrientationMaskLandscapeLeft|UIInterfaceOrientationMaskLandscapeRight;
 }
 
 // 当前 ViewController的初始显示方向
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation{
     // INFO_LOG("[vc]preferredInterfaceOrientationForPresentation\n");
+    UIWindow* window = [self windowWithLevel:UIWindowLevelNormal];
+    if (window){
+        return [window.rootViewController preferredInterfaceOrientationForPresentation];
+    }
     return UIInterfaceOrientationPortrait;
 }
 
 // 是否支持自动旋转
 - (BOOL)shouldAutorotate{
     // INFO_LOG("[vc]shouldAutorotate\n");
+    UIWindow* window = [self windowWithLevel:UIWindowLevelNormal];
+    if (window){
+        return [window.rootViewController shouldAutorotate];
+    }
     return YES;
 }
 
 // iOS 5 and before
 -(BOOL) shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation{
     INFO_LOG("[vc]shouldAutorotateToInterfaceOrientation\n");
+    
+    UIWindow* window = [self windowWithLevel:UIWindowLevelNormal];
+    if (window){
+        return [window.rootViewController shouldAutorotateToInterfaceOrientation:toInterfaceOrientation];
+    }
     
     if (toInterfaceOrientation == UIInterfaceOrientationPortrait
         || toInterfaceOrientation == UIInterfaceOrientationPortraitUpsideDown
@@ -249,6 +280,10 @@
     _iconSuperViewBounds = currentBounds;
 
 
+    // contentView center
+    if (!self.contentView.hidden){
+        self.contentView.center = CGPointMake(currentBounds.size.width/2, currentBounds.size.height/2);
+    }
     
     [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
 }
