@@ -12,41 +12,6 @@
 
 @implementation AssistiveTouchView
 
--(BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event{
-    printf("***[core-view]pointInside:(%f,%f)\n", point.x,point.y);
-    //NSLog(@"[core-view]event:%@", event);
-    printf("[core-view]pointInside:bounds(%f,%f,%f,%f)\n", self.bounds.origin.x, self.bounds.origin.y, self.bounds.size.width, self.bounds.size.height);
-    printf("[core-view]pointInside:frame(%f,%f,%f,%f)\n", self.frame.origin.x, self.frame.origin.y, self.frame.size.width, self.frame.size.height);
-
-    return [super pointInside:point withEvent:event];
-    
-//    if (CGRectContainsPoint(self.frame, point)){
-//        printf("***[core-view]pointInside:YES\n");
-//        return YES;
-//    }
-    
-//    for (UIView* subview in self.subviews) {
-//        CGRect frame = subview.frame;
-//        CGRect bounds = subview.bounds;
-//        
-//        printf("\t[core-view]pointInside:bounds(%f,%f,%f,%f)\n", bounds.origin.x, bounds.origin.y, bounds.size.width, bounds.size.height);
-//        printf("\t[core-view]pointInside:frame(%f,%f,%f,%f)\n", frame.origin.x, frame.origin.y, frame.size.width, frame.size.height);
-//        if (subview.hidden){
-//            continue;
-//        }
-//        if (CGRectContainsPoint(subview.frame, point)) {
-//            printf("***[core-view]pointInside:YES\n");
-//            return YES;
-//        }
-//    }
-//
-//
-//    
-//    printf("***[core-view]pointInside:NO\n");
-//    return NO;
-}
-
-
 @end
 
 
@@ -59,40 +24,18 @@
     self = [super initWithFrame:frame];
     if (self){
         self.backgroundColor = [UIColor clearColor];
-        // self.alpha = 0.5f;
     }
     
     return self;
 }
 
--(BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event{
-    printf("***[core-background]pointInside:(%f,%f)\n", point.x,point.y);
-    //NSLog(@"[core-background]event:%@", event);
-    printf("[core-background]pointInside:bounds(%f,%f,%f,%f)\n", self.bounds.origin.x, self.bounds.origin.y, self.bounds.size.width, self.bounds.size.height);
-    printf("[core-background]pointInside:frame(%f,%f,%f,%f)\n", self.frame.origin.x, self.frame.origin.y, self.frame.size.width, self.frame.size.height);
-    
-    for (UIView* subview in self.subviews){
-        CGRect frame = subview.frame;
-        CGRect bounds = subview.bounds;
-        
-        printf("\t[core-background]pointInside:bounds(%f,%f,%f,%f)\n", bounds.origin.x, bounds.origin.y, bounds.size.width, bounds.size.height);
-        printf("\t[core-background]pointInside:frame(%f,%f,%f,%f)\n", frame.origin.x, frame.origin.y, frame.size.width, frame.size.height);
-        
-        if (subview.hidden || subview.alpha <= 0.01 || !self.userInteractionEnabled){
-            continue;
-        }
-        
-        // CGPoint pt = [subview.layer convertPoint:point toLayer:self.layer];
-        // printf("[core-background]pointInside:(%f,%f)-(%f,%f)\n", point.x,point.y, pt.x, pt.y);
-        
-        if (CGRectContainsPoint(subview.frame, point)){
-            printf("***[core-background]pointInside:YES\n");
-            return YES;
-        }
+// Passing touch events through to views below
+- (UIView*)hitTest:(CGPoint)point withEvent:(UIEvent *)event{
+    UIView* hitTestView = [super hitTest:point withEvent:event];
+    if (hitTestView == self){
+        return nil;
     }
-    
-    printf("***[core-background]pointInside:NO\n");
-    return NO;
+    return hitTestView;
 }
 
 
