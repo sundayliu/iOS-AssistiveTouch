@@ -52,9 +52,49 @@
     
     [self.iconView addTarget:self action:@selector(onTouchUpInsideForIconView:) forControlEvents:UIControlEventTouchUpInside];
     
+    
+    // AutoLayout
     self.contentView = [[AssistiveTouchContentView alloc] init];
+    self.contentView.translatesAutoresizingMaskIntoConstraints = NO; // close autoresize
     [self.view addSubview:self.contentView];
     self.contentView.hidden = YES;
+    CGFloat w = self.contentView.bounds.size.width;
+    CGFloat h = self.contentView.bounds.size.height;
+    
+    // Constraints
+    [self.view addConstraints:@[
+                                [NSLayoutConstraint constraintWithItem:self.contentView
+                                                             attribute:NSLayoutAttributeWidth
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:self.view
+                                                             attribute:NSLayoutAttributeWidth
+                                                            multiplier:0.0f
+                                                              constant:w],
+                                [NSLayoutConstraint constraintWithItem:self.contentView
+                                                             attribute:NSLayoutAttributeHeight
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:self.view
+                                                             attribute:NSLayoutAttributeHeight
+                                                            multiplier:0.0f
+                                                              constant:h],
+                                [NSLayoutConstraint constraintWithItem:self.contentView
+                                                             attribute:NSLayoutAttributeCenterY
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:self.view
+                                                             attribute:NSLayoutAttributeCenterY
+                                                            multiplier:1.0f
+                                                              constant:0.f],
+                                [NSLayoutConstraint constraintWithItem:self.contentView
+                                                             attribute:NSLayoutAttributeCenterX
+                                                             relatedBy:NSLayoutRelationEqual
+                                                                toItem:self.view
+                                                             attribute:NSLayoutAttributeCenterX
+                                                            multiplier:1.0f
+                                                              constant:0.f]
+                                
+                                 ]];
+    
+    // Action
     [self.contentView.buttonDump1 addTarget:self action:@selector(onTouchUpInsideForContentView:) forControlEvents:UIControlEventTouchUpInside];
     [self.contentView.buttonDump2 addTarget:self action:@selector(onTouchUpInsideForContentView:) forControlEvents:UIControlEventTouchUpInside];
     [self.contentView.buttonCancel addTarget:self action:@selector(onTouchUpInsideForContentView:) forControlEvents:UIControlEventTouchUpInside];
@@ -128,7 +168,7 @@
 - (void) onTouchUpInsideForIconView:(id) sender{
     if ([sender isKindOfClass:[AssistiveTouchIconView class]]){
         self.contentView.hidden = !self.contentView.hidden;
-        self.contentView.center = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
+        //self.contentView.center = CGPointMake(self.view.frame.size.width/2, self.view.frame.size.height/2);
     }
 }
 
@@ -138,6 +178,7 @@
         switch(button.tag){
             case BUTTON_TAG_CANCEL:
                 NSLog(@"ContentView Cancel");
+                self.contentView.hidden = YES;
                 break;
             case BUTTON_TAG_1:
                 NSLog(@"ContentView Button One");
@@ -281,9 +322,9 @@
 
 
     // contentView center
-    if (!self.contentView.hidden){
-        self.contentView.center = CGPointMake(currentBounds.size.width/2, currentBounds.size.height/2);
-    }
+//    if (!self.contentView.hidden){
+//        self.contentView.center = CGPointMake(currentBounds.size.width/2, currentBounds.size.height/2);
+//    }
     
     [super willAnimateRotationToInterfaceOrientation:toInterfaceOrientation duration:duration];
 }
@@ -312,8 +353,8 @@
 
     CGRect frame = [UIScreen mainScreen].bounds;
     self.view = [[AssistiveTouchBackgroundView alloc]initWithFrame:frame];
-    self.view.backgroundColor = [UIColor greenColor];
-    self.view.alpha = 0.5f;
+    //self.view.backgroundColor = [UIColor greenColor];
+    //self.view.alpha = 0.5f;
     
 }
 

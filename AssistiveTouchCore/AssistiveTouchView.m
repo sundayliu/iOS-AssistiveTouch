@@ -65,7 +65,7 @@ static const CGFloat ATAlertViewHeight = 60.0;
                                                       ATAlertViewOffsetY,
                                                       ATAlertViewWidth - ATAlertViewOffsetX*2,
                                                       ATAlertViewHeight - ATAlertViewOffsetY*2)];
-        self.label.text = @"M";
+        self.label.text = @"O";
         self.label.backgroundColor = [UIColor clearColor];
         self.label.textColor = [UIColor whiteColor];
         self.label.textAlignment = NSTextAlignmentCenter;
